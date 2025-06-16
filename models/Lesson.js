@@ -6,7 +6,7 @@ const LessonSchema = new Schema({
         type: String,
         required: true
     },
-    content: {
+    text_content: {
         type: String,
         required: true
     },

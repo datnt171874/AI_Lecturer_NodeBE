@@ -4,7 +4,12 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
+const swaggerUi = require('swagger-ui-express')
+const YAML = require('yamljs')
+const path = require('path');
+
 const authRoute = require('./routes/authRoute')
+
 
 dotenv.config();
 const app = express();
@@ -23,6 +28,10 @@ mongoose.connect(process.env.MONGODB_CONNECT_URI,{
   console.error("MongoDB connection error:", err);
   process.exit(1);
 });
+const swaggerDocument = YAML.load(path.join(__dirname, './swagger/swagger.yaml'));
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
 app.use(express.json());
