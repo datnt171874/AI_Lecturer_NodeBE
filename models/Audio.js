@@ -6,10 +6,9 @@ const AudioSchema = new Schema({
   audio_url: { type: String },
   language: { type: String },
   voice_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Voice' },
-  speed: { type: Number },
+  speed: { type: Number, default: 1.0 },
   duration: { type: Number },
-  status: { type: String },
-  created_at: { type: Date, default: Date.now }
+  status: { type: String , default: 'processing'},
 });
 
 module.exports = mongoose.model('Audio', AudioSchema);

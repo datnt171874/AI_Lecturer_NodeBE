@@ -8,7 +8,7 @@ const VideoSchema = new Schema({
   format: { type: String },
   duration: { type: Number },
   resolution: { type: String },
-  status: { type: String },
+  status: { type: String, default: 'processing' },
 });
 
 module.exports = mongoose.model('Video', VideoSchema);
