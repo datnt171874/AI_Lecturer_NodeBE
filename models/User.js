@@ -2,6 +2,11 @@ const mongoose = require('mongoose')
 const {Schema} = mongoose;
 
 const UserSchema = new Schema({
+    username: {
+        type: String,
+        required: true,
+        unique: true
+    },
     fullname:{
         type: String
     },  
@@ -16,6 +21,7 @@ const UserSchema = new Schema({
     },
     role: {
         type: String,  
+        default: 'Lecturer',
     },
     phone:{
         type: String,
