@@ -9,7 +9,7 @@ const YAML = require('yamljs')
 const path = require('path');
 
 const authRoute = require('./routes/authRoute')
-
+const lessonRoute = require('./routes/lessonRoute')
 
 dotenv.config();
 const app = express();
@@ -30,11 +30,11 @@ mongoose.connect(process.env.MONGODB_CONNECT_URI,{
 });
 const swaggerDocument = YAML.load(path.join(__dirname, './swagger/swagger.yaml'));
 
-// Serve Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('/api/auth', authRoute)
+app.use('/api/auth', authRoute);
+app.use('/api/lessons', lessonRoute);
