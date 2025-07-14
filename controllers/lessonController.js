@@ -51,6 +51,7 @@ const generateLessonContent = async (inputText) => {
     const jsonString = content.replace(/```json\n|\n```/g, '').trim();
     return JSON.parse(jsonString);
   } catch (error) {
+    console.error(' Error from AI API:', error.response?.data || error.message);
     throw new Error('Failed to generate lesson content: ' + error.message);
   }
 };
@@ -251,7 +252,7 @@ slideDocs.push({
       .output(finalVideoPath)
       .on('end', async () => {
         const publicVideoName = `${lesson._id}_output.mp4`;
-const publicVideoPath = path.join(__dirname, '../controllers/temp', publicVideoName);
+const publicVideoPath = path.join(__dirname, '../public/videos', publicVideoName);
 await fs.copyFile(finalVideoPath, publicVideoPath);
         const video = new Video({
           lesson_id: lesson._id,
@@ -265,12 +266,12 @@ await fs.copyFile(finalVideoPath, publicVideoPath);
         await video.save();
 
         res.status(201).json({
-          message: 'Lesson and video created successfully',
-          lesson,
-          segments,
-          slides: slideDocs,
-          video: finalVideoPath
-        });
+  message: 'Lesson and video created successfully',
+  lesson,
+  segments,
+  slides: slideDocs,
+  video: `http://localhost:8080/videos/${publicVideoName}`
+});
       })
       .on('error', (err) => {
         console.error('FFmpeg final error:', err.message);
