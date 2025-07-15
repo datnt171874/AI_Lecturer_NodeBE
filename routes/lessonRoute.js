@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const lessonController = require('../controllers/lessonController');
-const {authenticate, authorize} = require('../middlewares/authMiddleware');
+const {authenticate, authorize} = require('../middleware/authMiddleware');
 
 
 router.post('/', authenticate, lessonController.createLessonWithText);

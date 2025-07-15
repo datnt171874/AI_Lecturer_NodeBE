@@ -38,3 +38,4 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoute);
 app.use('/api/lessons', lessonRoute);
+app.use('/videos', express.static(path.join(__dirname, 'public/videos')));
