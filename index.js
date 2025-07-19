@@ -30,7 +30,7 @@ mongoose.connect(process.env.MONGODB_CONNECT_URI,{
   console.error("MongoDB connection error:", err);
   process.exit(1);
 });
-const swaggerDocument = YAML.load(path.join(__dirname, './swagger/swagger.yaml'));
+// const swaggerDocument = YAML.load(path.join(__dirname, './swagger/swagger.yaml'));
 
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api-docs', serve, setup(swaggerDocument));
