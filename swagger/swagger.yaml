@@ -217,6 +217,568 @@ paths:
           description: Unauthorized access
         '500':
           description: Server error
+  /api/lessons/{id}:
+    get:
+      summary: Get lesson details
+      tags:
+        - Lessons
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Lesson ID
+      responses:
+        '200':
+          description: Lesson details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  title:
+                    type: string
+                  text_content:
+                    type: string
+                  language:
+                    type: string
+                  status:
+                    type: string
+                    enum: [uploaded, processing, failed, completed]
+                  createdBy:
+                    type: string
+        '404':
+          description: Lesson not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+    patch:
+      summary: Update lesson details
+      tags:
+        - Lessons
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Lesson ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: Updated Lesson Title
+                text_content:
+                  type: string
+                  example: Updated lesson content...
+                language:
+                  type: string
+                  example: vi
+                status:
+                  type: string
+                  enum: [uploaded, processing, failed, completed]
+      responses:
+        '200':
+          description: Lesson updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lesson updated successfully
+                  lesson:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      title:
+                        type: string
+                      text_content:
+                        type: string
+                      language:
+                        type: string
+                      status:
+                        type: string
+        '404':
+          description: Lesson not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+    delete:
+      summary: Delete a lesson
+      tags:
+        - Lessons
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Lesson ID
+      responses:
+        '200':
+          description: Lesson deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lesson deleted successfully
+        '404':
+          description: Lesson not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/segments:
+    get:
+      summary: Get all segments for a lesson
+      tags:
+        - Segments
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: lesson_id
+          required: true
+          schema:
+            type: string
+          description: Lesson ID to filter segments
+      responses:
+        '200':
+          description: List of segments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    lesson_id:
+                      type: string
+                    segment_order:
+                      type: number
+                    text:
+                      type: string
+                    duration:
+                      type: number
+                    start_time:
+                      type: number
+        '404':
+          description: Lesson not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/segments/{id}:
+    get:
+      summary: Get segment details
+      tags:
+        - Segments
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Segment ID
+      responses:
+        '200':
+          description: Segment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  lesson_id:
+                    type: string
+                  segment_order:
+                    type: number
+                  text:
+                    type: string
+                  duration:
+                    type: number
+                  start_time:
+                    type: number
+        '404':
+          description: Segment not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+    patch:
+      summary: Update segment details
+      tags:
+        - Segments
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Segment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  example: Updated segment text
+                segment_order:
+                  type: number
+                  example: 2
+                duration:
+                  type: number
+                  example: 10
+                start_time:
+                  type: number
+                  example: 5
+      responses:
+        '200':
+          description: Segment updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Segment updated successfully
+                  segment:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      lesson_id:
+                        type: string
+                      segment_order:
+                        type: number
+                      text:
+                        type: string
+                      duration:
+                        type: number
+                      start_time:
+                        type: number
+        '404':
+          description: Segment not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/slides:
+    get:
+      summary: Get all slides for a segment
+      tags:
+        - Slides
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: segment_id
+          required: true
+          schema:
+            type: string
+          description: Segment ID to filter slides
+      responses:
+        '200':
+          description: List of slides
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    segment_id:
+                      type: string
+                    image_url:
+                      type: string
+                    display_time:
+                      type: number
+                    order_index:
+                      type: number
+                    status:
+                      type: string
+        '404':
+          description: Segment not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/slides/{id}:
+    get:
+      summary: Get slide details
+      tags:
+        - Slides
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Slide ID
+      responses:
+        '200':
+          description: Slide details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  segment_id:
+                    type: string
+                  image_url:
+                    type: string
+                  display_time:
+                    type: number
+                  order_index:
+                    type: number
+                  status:
+                    type: string
+        '404':
+          description: Slide not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/videos:
+    get:
+      summary: Get all videos for a lesson
+      tags:
+        - Videos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: lesson_id
+          required: true
+          schema:
+            type: string
+          description: Lesson ID to filter videos
+      responses:
+        '200':
+          description: List of videos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    lesson_id:
+                      type: string
+                    name:
+                      type: string
+                    video_url:
+                      type: string
+                    format:
+                      type: string
+                    duration:
+                      type: number
+                    resolution:
+                      type: string
+                    status:
+                      type: string
+        '404':
+          description: Lesson not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/videos/{id}:
+    get:
+      summary: Get video details
+      tags:
+        - Videos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Video ID
+      responses:
+        '200':
+          description: Video details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  lesson_id:
+                    type: string
+                  name:
+                    type: string
+                  video_url:
+                    type: string
+                  format:
+                    type: string
+                  duration:
+                    type: number
+                  resolution:
+                    type: string
+                  status:
+                    type: string
+        '404':
+          description: Video not found
+        '403':
+          description: Unauthorized access
+        '500':
+          description: Server error
+  /api/users/me:
+    get:
+      summary: Get current user profile
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  username:
+                    type: string
+                  fullname:
+                    type: string
+                  email:
+                    type: string
+                  role:
+                    type: string
+                    enum: [Admin, Lecturer]
+                  phone:
+                    type: string
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+    patch:
+      summary: Update current user profile
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fullname:
+                  type: string
+                  example: Updated Full Name
+                email:
+                  type: string
+                  example: updated@example.com
+                phone:
+                  type: string
+                  example: +1234567890
+      responses:
+        '200':
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User profile updated successfully
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      username:
+                        type: string
+                      fullname:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      phone:
+                        type: string
+        '400':
+          description: Invalid input or email already exists
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+  /api/voices:
+    get:
+      summary: Get available voices
+      tags:
+        - Voices
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of available voices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    language:
+                      type: string
+                    voice_name:
+                      type: string
+        '500':
+          description: Server error
 components:
   securitySchemes:
     bearerAuth:
