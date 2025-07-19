@@ -1,10 +1,10 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: AI Lesson Generator API
   description: API for auto-generating audio/video lessons from text
   version: 1.0.0
 servers:
-  - url: http://localhost:8080
+  - url: http://localhost:8080/
     description: Local server
 paths:
   /api/auth/register:
