@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 const swaggerUi = require('swagger-ui-express')
-const swaggerDocument = require('./swagger')
+const swaggerDocument = require('./swagger.js');
 const {serve, setup} = require('swagger-ui-express');
 const YAML = require('yamljs')
 const path = require('path');
@@ -32,8 +32,8 @@ mongoose.connect(process.env.MONGODB_CONNECT_URI,{
 });
 // const swaggerDocument = YAML.load(path.join(__dirname, './swagger/swagger.yaml'));
 
-// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-app.use('/api-docs', serve, setup(swaggerDocument));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// app.use('/api-docs', serve, setup(swaggerDocument));
 
 app.use(cors());
 app.use(express.json());
