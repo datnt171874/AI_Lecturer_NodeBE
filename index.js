@@ -18,6 +18,19 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Thêm tiêu đề COOP
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
+
+
 mongoose.connect(process.env.MONGODB_CONNECT_URI,{
   useNewUrlParser: true,
   useUnifiedTopology: true,

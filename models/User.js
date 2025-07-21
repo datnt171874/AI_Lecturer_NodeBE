@@ -17,7 +17,7 @@ const UserSchema = new Schema({
     },
     password: {
         type: String,
-        required: true
+        required: false
     },
     role: {
         type: String,  
@@ -26,7 +26,11 @@ const UserSchema = new Schema({
     },
     phone:{
         type: String,
-    }
-
+    },
+    googleId: {
+    type: String,
+    unique: true,
+    sparse: true, // Cho phép null nhưng vẫn đảm bảo tính duy nhất
+  },
 });
 module.exports = mongoose.model('User', UserSchema);
