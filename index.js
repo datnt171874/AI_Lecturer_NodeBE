@@ -9,18 +9,24 @@ const swaggerDocument = require('./swagger.js');
 const {serve, setup} = require('swagger-ui-express');
 const YAML = require('yamljs')
 const path = require('path');
+const multer = require('multer');
 
 const authRoute = require('./routes/authRoute')
 const lessonRoute = require('./routes/lessonRoute')
+const collectionRoute = require('./routes/collectionRoute');
+const pushRoute = require('./routes/push');
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080;
+// Configure multer for file uploads
+const storage = multer.memoryStorage(); // Stores file in memory (can be changed to disk storage if needed)
+const upload = multer({ storage: storage }); // Initialize upload middleware
 
 
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -53,5 +59,15 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use('/api/auth', authRoute);
-app.use('/api/lessons', lessonRoute);
+app.use('/api/lessons', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ error: 'File upload failed: ' + err.message });
+    }
+    next();
+  });
+}, lessonRoute);
+app.use('/api/collection', collectionRoute);
 app.use('/videos', express.static(path.join(__dirname, 'public/videos')));
+app.use('/api/push', pushRoute);
