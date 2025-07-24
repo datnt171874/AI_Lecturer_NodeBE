@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: AI Lesson Generator API
-  description: API for auto-generating audio/video lessons from text
+  description: API for auto-generating audio/video lessons from text and managing push notifications
   version: 1.0.0
 servers:
   - url: http://localhost:8080/
@@ -24,10 +24,17 @@ paths:
                   example: teacher@example.com
                 username:
                   type: string
-                  example: Teacher Name
+                  example: TeacherName
                 password:
                   type: string
                   example: password123
+                fullname:
+                  type: string
+                  example: Teacher Full Name
+                role:
+                  type: string
+                  enum: [Admin, Lecturer]
+                  example: Lecturer
               required:
                 - email
                 - username
@@ -55,6 +62,14 @@ paths:
                     example: Email đã được sử dụng
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/auth/login:
     post:
       summary: Login user
@@ -67,14 +82,14 @@ paths:
             schema:
               type: object
               properties:
-                username:
+                email:
                   type: string
-                  example: Teacher Name
+                  example: teacher@example.com
                 password:
                   type: string
                   example: password123
               required:
-                - username
+                - email
                 - password
       responses:
         '200':
@@ -90,6 +105,10 @@ paths:
                   message:
                     type: string
                     example: Đăng nhập thành công
+                  role:
+                    type: string
+                    enum: [Admin, Lecturer]
+                    example: Lecturer
         '400':
           description: Invalid credentials
           content:
@@ -102,6 +121,69 @@ paths:
                     example: Tên người dùng hoặc mật khẩu không đúng
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
+  /api/auth/google:
+    post:
+      summary: Login or register with Google
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idToken:
+                  type: string
+                  example: eyJhbGciOiJSUzI1NiIsImtpZCI6Ij...
+              required:
+                - idToken
+      responses:
+        '200':
+          description: Google login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  message:
+                    type: string
+                    example: Đăng nhập Google thành công
+                  role:
+                    type: string
+                    enum: [Admin, Lecturer]
+                    example: Lecturer
+        '400':
+          description: Invalid Google token or unverified email
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email Google chưa được xác minh
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi xác thực Google
   /api/lessons:
     post:
       summary: Create a new lesson
@@ -125,15 +207,11 @@ paths:
                 language:
                   type: string
                   example: vi
-                voice_id:
-                  type: string
-                  example: voice_id_here
                 file:
                   type: string
                   format: binary
               required:
                 - title
-                - voice_id
       responses:
         '201':
           description: Lesson created successfully
@@ -144,7 +222,7 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Bài giảng đã được tạo, đang xử lý
+                    example: Lesson and video created successfully
                   lesson:
                     type: object
                     properties:
@@ -152,8 +230,85 @@ paths:
                         type: string
                       title:
                         type: string
+                      text_content:
+                        type: string
+                      language:
+                        type: string
+                      createdBy:
+                        type: string
+                      status:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum: [uploaded, processing, failed, completed]
+                  segments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        lesson_id:
+                          type: string
+                        segment_order:
+                          type: number
+                        text:
+                          type: string
+                        duration:
+                          type: number
+                        start_time:
+                          type: number
+                  slides:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        segment_id:
+                          type: string
+                        image_url:
+                          type: string
+                        display_time:
+                          type: number
+                        order_index:
+                          type: number
+                        status:
+                          type: string
+                  video:
+                    type: string
+                    example: https://your-domain.com/videos/lesson_id_output.mp4
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Title and either text_content or file are required
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User not authenticated
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to generate lesson content
     get:
       summary: Get all lessons
       tags:
@@ -179,44 +334,14 @@ paths:
                       enum: [uploaded, processing, failed, completed]
         '500':
           description: Server error
-  /api/lessons/{id}/status:
-    get:
-      summary: Get lesson status
-      tags:
-        - Lessons
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Lesson ID
-      responses:
-        '200':
-          description: Lesson status
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  lesson:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      title:
-                        type: string
-                      status:
-                        type: string
-                        enum: [uploaded, processing, failed, completed]
-        '404':
-          description: Lesson not found
-        '403':
-          description: Unauthorized access
-        '500':
-          description: Server error
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/lessons/{id}:
     get:
       summary: Get lesson details
@@ -254,10 +379,34 @@ paths:
                     type: string
         '404':
           description: Lesson not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lesson not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
     patch:
       summary: Update lesson details
       tags:
@@ -316,10 +465,34 @@ paths:
                         type: string
         '404':
           description: Lesson not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lesson not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
     delete:
       summary: Delete a lesson
       tags:
@@ -346,10 +519,34 @@ paths:
                     example: Lesson deleted successfully
         '404':
           description: Lesson not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lesson not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/segments:
     get:
       summary: Get all segments for a lesson
@@ -388,85 +585,6 @@ paths:
                       type: number
         '404':
           description: Lesson not found
-        '403':
-          description: Unauthorized access
-        '500':
-          description: Server error
-  /api/segments/{id}:
-    get:
-      summary: Get segment details
-      tags:
-        - Segments
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Segment ID
-      responses:
-        '200':
-          description: Segment details
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  lesson_id:
-                    type: string
-                  segment_order:
-                    type: number
-                  text:
-                    type: string
-                  duration:
-                    type: number
-                  start_time:
-                    type: number
-        '404':
-          description: Segment not found
-        '403':
-          description: Unauthorized access
-        '500':
-          description: Server error
-    patch:
-      summary: Update segment details
-      tags:
-        - Segments
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          description: Segment ID
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                text:
-                  type: string
-                  example: Updated segment text
-                segment_order:
-                  type: number
-                  example: 2
-                duration:
-                  type: number
-                  example: 10
-                start_time:
-                  type: number
-                  example: 5
-      responses:
-        '200':
-          description: Segment updated successfully
           content:
             application/json:
               schema:
@@ -474,28 +592,27 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: Segment updated successfully
-                  segment:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      lesson_id:
-                        type: string
-                      segment_order:
-                        type: number
-                      text:
-                        type: string
-                      duration:
-                        type: number
-                      start_time:
-                        type: number
-        '404':
-          description: Segment not found
+                    example: Lesson not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/slides:
     get:
       summary: Get all slides for a segment
@@ -534,10 +651,34 @@ paths:
                       type: string
         '404':
           description: Segment not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Segment not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/slides/{id}:
     get:
       summary: Get slide details
@@ -574,10 +715,34 @@ paths:
                     type: string
         '404':
           description: Slide not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Slide not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/videos:
     get:
       summary: Get all videos for a lesson
@@ -620,10 +785,34 @@ paths:
                       type: string
         '404':
           description: Lesson not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lesson not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/videos/{id}:
     get:
       summary: Get video details
@@ -664,10 +853,34 @@ paths:
                     type: string
         '404':
           description: Video not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Video not found
         '403':
           description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized access
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
   /api/users/me:
     get:
       summary: Get current user profile
@@ -698,8 +911,34 @@ paths:
                     type: string
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Người dùng không tồn tại
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
     patch:
       summary: Update current user profile
       tags:
@@ -746,24 +985,49 @@ paths:
                         type: string
                       role:
                         type: string
+                        enum: [Admin, Lecturer]
                       phone:
                         type: string
         '400':
           description: Invalid input or email already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid input
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized
         '500':
           description: Server error
-  /api/voices:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
+  /api/users:
     get:
-      summary: Get available voices
+      summary: Get all users (Admin only)
       tags:
-        - Voices
+        - Users
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: List of available voices
+          description: List of users
           content:
             application/json:
               schema:
@@ -773,12 +1037,341 @@ paths:
                   properties:
                     id:
                       type: string
-                    language:
+                    username:
                       type: string
-                    voice_name:
+                    fullname:
                       type: string
+                    email:
+                      type: string
+                    role:
+                      type: string
+                      enum: [Admin, Lecturer]
+                    phone:
+                      type: string
+        '403':
+          description: Access denied (not Admin)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Access denied: Admins only
         '500':
           description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
+  /api/users/{id}:
+    patch:
+      summary: Update a user (Admin only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: updated@example.com
+                username:
+                  type: string
+                  example: UpdatedUsername
+                fullname:
+                  type: string
+                  example: Updated Full Name
+                role:
+                  type: string
+                  enum: [Admin, Lecturer]
+                  example: Lecturer
+                phone:
+                  type: string
+                  example: +1234567890
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User updated successfully
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      username:
+                        type: string
+                      fullname:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                        enum: [Admin, Lecturer]
+                      phone:
+                        type: string
+        '403':
+          description: Access denied (not Admin)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Access denied: Admins only
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
+    delete:
+      summary: Delete a user (Admin only)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User deleted successfully
+        '403':
+          description: Access denied (not Admin)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Access denied: Admins only
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User not found
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
+  /api/push/public-key:
+    get:
+      summary: Get VAPID public key for push notifications
+      tags:
+        - Push Notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: VAPID public key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  publicKey:
+                    type: string
+                    example: BDk9... (base64-encoded VAPID public key)
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Lỗi server
+  /api/push/subscribe:
+    post:
+      summary: Subscribe to push notifications
+      tags:
+        - Push Notifications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                  example: https://fcm.googleapis.com/fcm/send/...
+                keys:
+                  type: object
+                  properties:
+                    p256dh:
+                      type: string
+                      example: BN4... (base64-encoded key)
+                    auth:
+                      type: string
+                      example: k8... (base64-encoded key)
+              required:
+                - endpoint
+                - keys
+      responses:
+        '201':
+          description: Subscription saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Subscription saved successfully
+        '400':
+          description: Invalid subscription data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid subscription data
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: User not authenticated
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to save subscription
+  /api/push/notify:
+    post:
+      summary: Send a custom push notification
+      tags:
+        - Push Notifications
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: New Notification
+                message:
+                  type: string
+                  example: This is a custom notification
+                role:
+                  type: string
+                  enum: [Admin, Lecturer]
+                  example: Admin
+              required:
+                - title
+                - message
+      responses:
+        '200':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Notification sent
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Title and message are required
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to send notification
 components:
   securitySchemes:
     bearerAuth:

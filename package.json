@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.850.0",
+    "@aws-sdk/s3-request-presigner": "^3.850.0",
     "@google-cloud/text-to-speech": "^6.1.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.10.0",
@@ -36,6 +38,7 @@
     "pdf-parse": "^1.1.1",
     "puppeteer": "^24.10.1",
     "swagger-ui-express": "^5.0.1",
+    "web-push": "^3.6.7",
     "yamljs": "^0.3.0"
   }
 }
