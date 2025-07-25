@@ -25,8 +25,8 @@ const upload = multer({ storage: storage }); // Initialize upload middleware
 
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD'],
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -54,7 +54,7 @@ mongoose.connect(process.env.MONGODB_CONNECT_URI,{
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // app.use('/api-docs', serve, setup(swaggerDocument));
 
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
